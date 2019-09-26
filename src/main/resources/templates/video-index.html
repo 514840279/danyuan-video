@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta charset="UTF-8">
+</head>
+<body>
+	<!-- 头部设计 -->
+	<section class="content-header">
+		<h1>
+			视频 <small>播放</small>
+		</h1>
+		<ol class="breadcrumb">
+			<li><a href="index.html"><i class="fa fa-dashboard"></i>首页</a></li>
+			<li><a href="#">视频 </a></li>
+			<li class="active">播放</li>
+		</ol>
+	</section>
+
+	<!-- Main content -->
+	<section class="content" >
+		<div class="box row">
+			<div class="col-lg-3">
+				<table id="show-video-table"></table>
+			</div>
+			<div class="col-lg-9">
+				<div id="show-video"></div>
+				<div id="show-instro"></div>
+			</div>
+		</div>
+	</section>
+	<script type="text/javascript">
+	// bootstrap table 初始化
+	$('#show-video-table').bootstrapTable({
+		url : "/video/page",
+		dataType : "json",
+		cache : true, // 是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+		sortable : true, // 是否启用排序
+		sortOrder : "asc", // 排序方式
+		pagination : true, // 分页
+		pageNumber : 1, // 初始化加载第一页，默认第一页
+		pageSize : 10, // 每页的记录行数（*）
+		pageList : [10, 20, 40, 60,80, 100 ], // 可供选择的每页的行数（*）
+		strictSearch : true,
+// 		showColumns : true, // 是否显示所有的列
+// 		showRefresh : true, // 是否显示刷新按钮
+// 		minimumCountColumns : 2, // 最少允许的列数
+		clickToSelect : true, // 是否启用点击选中行
+// 		height : 800, // 行高，如果没有设置height属性，表格自动根据记录条数觉得表格高度
+		uniqueId : "uuid", // 每一行的唯一标识，一般为主键列
+// 		showToggle : true, // 是否显示详细视图和列表视图的切换按钮
+// 		cardView : false, // 是否显示详细视图
+// 		detailView : false, // 是否显示父子表
+		singleSelect : false,
+		locales : "zh-CN", // 表格汉化
+		search : true, // 显示搜索框
+		sidePagination : "server", // 服务端处理分页
+		//设置为undefined可以获取pageNumber，pageSize，searchText，sortName，sortOrder  
+		//设置为limit可以获取limit, offset, search, sort, order  
+		queryParamsType : "undefined",
+		contentType : "application/json",
+		method : "post", // 使用get请求到服务器获取数据
+		queryParams: function queryParams(params) {  
+			console.log(params)
+			var param = {  
+				pageNumber: params.pageNumber,    
+				pageSize: params.pageSize,
+				sortOrder:params.sortOrder,
+				sortName:params.sortName,
+				filter:params.filter,
+				info:{
+					"fileName":params.searchText
+				}
+			}; 
+			return param;
+		},
+		columns : [ 
+			{title : 'id',field : 'uuid',align : 'left',sortable : true,valign : 'middle',switchable:true,visible:false},
+			{title : '名称',	field : 'fileName','width':150,align : 'left',sortable : true,valign : 'middle',switchable:true},
+		],
+		responseHandler: function(result){  // 成功时执行
+			console.log(result)
+			return {rows:result.data.content,total:result.data.totalElements}; // 绑定数据 
+		},
+	}).on('dbl-click-row.bs.table', function (e, row, ele,field) { // 行双击事件 
+	}).on('click-row.bs.table', function (e, row, ele,field) { // 行单击事件
+		$(".info").removeClass("info");
+    	$(ele).addClass("info");
+    	console.log()
+    	
+    	var url ="/video/findOne";
+		ajaxPost(url,{"filename":row['fileName']},showInstro)
+    	function showInstro(result){
+			console.log(result,row['filePath'].replace("F:\\迅雷下载\\",""));
+			
+			const dp = new DPlayer({
+			    container: document.getElementById('show-video'),
+			    screenshot: false,
+			    video: {
+// 			        url: result.data.fileaddr,
+			        url: '/'+encodeURI(row['filePath'].replace("F:\\迅雷下载\\","").replace("\\","/")),
+// 			        pic: 'http://static.smartisanos.cn/pr/img/video/video_03_cc87ce5bdb.jpg',
+// 			        thumbnails: 'https://moeplayer.b0.upaiyun.com/dplayer/hikarunara_thumbnails.jpg',
+			    }
+			    // subtitle: {
+			    //     url: 'webvtt.vtt'
+			    // },
+			    // danmaku: {
+			    //     id: 'demo',
+			    //     api: 'https://api.prprpr.me/dplayer/'
+			    // }
+			});
+			dp.play();
+			
+			$("#show-instro").html('');
+			$("#show-instro").html(result.data.context);
+		}
+		
+	});
+	
+	</script>
+</body>
+</html>

@@ -9,7 +9,7 @@ spring:
     - classpath:/static/
     - classpath:/public/
     - file:./file/
-    - file:F:/BaiduNetdiskDownload
+    - file:F:/迅雷下载/
   media: .mp4,.rmvb,.mkv
   
   aop:

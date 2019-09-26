@@ -17,3 +17,7 @@ adminLTE bootstrap dplayer
 
 登录页面输入要添加的路径，系统自动整理视频文件信息记录下来
 点击查看前 把路径配置到系统参数中重启系统，即可在线播放视频
+
+
+dplayer 经测试 默认 可以播放 mp4，mkv flv 的格式
+目前不支持 rmvb 格式

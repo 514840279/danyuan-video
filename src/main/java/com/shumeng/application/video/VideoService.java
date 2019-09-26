@@ -7,13 +7,32 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+
+import com.shumeng.application.MysqlConnUtils;
+import com.shumeng.application.Pagination;
 
 /**
  * 文件名 ： SysPlantChartDimensionDataService.java
@@ -30,6 +49,9 @@ public class VideoService {
 
 	@Autowired
 	VideoDao				videoDao;
+
+	@Autowired
+	AddrInstroDao			addrInstroDao;
 
 	@Value(value = "${spring.media}")
 	private List<String>	media;
@@ -101,6 +123,86 @@ public class VideoService {
 			}
 		}
 		return list;
+	}
+
+	/**
+	 * @throws SQLException
+	 */
+	public void find2() throws SQLException {
+		Connection conn = MysqlConnUtils.getConnection();
+		Statement st = conn.createStatement();
+		ResultSet re = st.executeQuery("select * from application.addr_instro");
+		while (re.next()) {
+			AddrInstro instro = new AddrInstro();
+			instro.setUuid(re.getString("uuid"));
+			instro.setMd5(re.getString("主键"));
+			instro.setWebname(re.getString("网站"));
+			instro.setName(re.getString("资料名称"));
+			instro.setWebaddr(re.getString("地址"));
+			instro.setLabel(re.getString("日期"));
+			instro.setInstro(re.getString("简介"));
+			instro.setLabeltype(re.getString("分类"));
+			instro.setContext(re.getString("内容"));
+			instro.setFileaddr(re.getString("ADDR"));
+			instro.setFilename(re.getString("FILE_NAME"));
+			addrInstroDao.save(instro);
+		}
+		
+	}
+
+	/**
+	 * @param info
+	 * @return
+	 */
+	public Page<FileInfo> page(Pagination<FileInfo> info) {
+		Example.of(info.getInfo());
+		if (info.getSortName() != null) {
+			Order order = Order.asc(info.getSortName());
+			Sort sort = Sort.by(order);
+			PageRequest request = PageRequest.of(info.getPageNumber() - 1, info.getPageSize(), sort);
+			return videoDao.findAll(new Specification<FileInfo>() {
+				/**
+				 * @Fields serialVersionUID : TODO(用一句话描述这个变量表示什么)
+				 */
+				private static final long serialVersionUID = 1L;
+				
+				@Override
+				public Predicate toPredicate(Root<FileInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+					List<Predicate> list = new ArrayList<>();
+					list.add(cb.like(root.get("fileName").as(String.class), "%" + info.getInfo().getFileName() + "%"));
+					return cb.and(list.toArray(new Predicate[list.size()]));
+				}
+			}, request);
+		} else {
+			PageRequest request = PageRequest.of(info.getPageNumber() - 1, info.getPageSize());
+			return videoDao.findAll(new Specification<FileInfo>() {
+				/**
+				 * @Fields serialVersionUID : TODO(用一句话描述这个变量表示什么)
+				 */
+				private static final long serialVersionUID = 1L;
+				
+				@Override
+				public Predicate toPredicate(Root<FileInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+					List<Predicate> list = new ArrayList<>();
+					list.add(cb.like(root.get("fileName").as(String.class), "%" + info.getInfo().getFileName() + "%"));
+					return cb.and(list.toArray(new Predicate[list.size()]));
+				}
+			}, request);
+		}
+		
+	}
+
+	/**
+	 * @param info
+	 * @return
+	 */
+	public AddrInstro findOne(AddrInstro info) {
+		Example<AddrInstro> example = Example.of(info);
+		Optional<AddrInstro> optional = addrInstroDao.findOne(example);
+		if (optional.isPresent()) {
+			return optional.get();
+		}
+		return null;
 	}
 	
 }
